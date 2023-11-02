@@ -1,8 +1,13 @@
 const Post = require('../models/post_model')
 
-const getAllPosts = (req, res, next) => {
-  res.send('get all posts')
-};
+const getAllPosts = async (req, res, next) => {
+  try{
+    const posts = await Post.find()
+    res.status(200).send(posts)
+  }catch(err){
+    res.status(400).send({'error':'fail to get posts from DB'})
+  }
+}
 
 const addNewPosts = async (req, res, next) => {
   console.log(req.body);
@@ -20,5 +25,14 @@ const addNewPosts = async (req, res, next) => {
   }
 }
 
+const getPostByID = async (req, res, next) => {
+  console.log(req.params.id)
+  try{
+    const posts = await Post.findById(req.params.id)
+    res.status(200).send(posts)
+  }catch(err){
+    res.status(400).send({'error':'fail to get posts from DB'})
+  }
+}
 
-module.exports = { getAllPosts, addNewPosts }
+module.exports = { getAllPosts, addNewPosts, getPostByID}
