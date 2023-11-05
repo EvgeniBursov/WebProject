@@ -13,9 +13,9 @@ const db = mongoose.connection
 db.on('error', error=>{console.log(error)})
 db.once('open',()=>{console.log('connected to mongo DB')})
 
+app.use(express.static('public'))
 
 const postRouter = require('./routes/post_route.js')
-
 app.use('/post', postRouter)
 
 app.get('/', (req,res)=> {

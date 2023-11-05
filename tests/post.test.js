@@ -1,26 +1,40 @@
-const request = require('supertest')
-const app = require('../server')
-const mongoose = require('mongoose')
+    const request = require('supertest')
+    const app = require('../server')
+    const mongoose = require('mongoose')
+    const Post = require('../models/post_model')
 
-beforeAll(done=>{
-    done()
-})
 
-afterAll(done=>{
-    mongoose.connection.close()
-    done()
-})
+    const newPost = "this is my new message"
+    const newSender = '999000'
 
-describe("Posts Tests", ()=>{
-    test("add new post", async ()=>{
-        const tmp = 2
-        expect(tmp).toEqual(2)
+    beforeAll(async () =>{
+        await Post.deleteMany()
     })
-})
 
-describe("GET / ", ()=>{
-    test("It should respond hello", async ()=>{
-        const response = await request(app).get("/post") 
+    afterAll(async () =>{
+        await Post.deleteMany()
+        mongoose.connection.close()
+    })
+
+    describe("Posts Tests", ()=>{
+        test("get all post", async ()=>{
+            const response = await request(app).get("/post") 
+            expect(response.statusCode).toEqual(200)
+        })
+
+        test("add new test", async ()=>{
+            const response = await request(app).post('/post').send({
+                "message": newPost,
+                "sender": newSender
+        }) 
         expect(response.statusCode).toEqual(200)
+        expect(response.body.newPost.sender).toEqual(newSender)
+        })
+
+        test("get all post containing given text in post massages", async ()=>{
+            const response = await request(app).get('/post?message=new')
+            expect(response.statusCode).toEqual(200)
+            expect(response.body.newPost.sender).toEqual(newSender)
+        })
     })
-})
+
