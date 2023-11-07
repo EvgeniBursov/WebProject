@@ -1,6 +1,6 @@
-const Post = require('../models/post_model')
+import Post from '../models/post_model'
 
-const getAllPosts = async (req, res, next) => {
+const getAllPosts = async (req, res) => {
   try{
     const posts = await Post.find()
     res.status(200).send(posts)
@@ -9,7 +9,7 @@ const getAllPosts = async (req, res, next) => {
   }
 }
 
-const addNewPosts = async (req, res, next) => {
+const addNewPosts = async (req, res) => {
   console.log(req.body);
 
   const post = new Post({
@@ -25,7 +25,7 @@ const addNewPosts = async (req, res, next) => {
   }
 }
 
-const getPostByID = async (req, res, next) => {
+const getPostByID = async (req, res) => {
   console.log(req.params.id)
   try{
     const posts = await Post.findById(req.params.id)
@@ -35,4 +35,4 @@ const getPostByID = async (req, res, next) => {
   }
 }
 
-module.exports = { getAllPosts, addNewPosts, getPostByID}
+export = { getAllPosts, addNewPosts, getPostByID}

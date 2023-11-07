@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+import mongoose from "mongoose"
 
 const postSchema = new mongoose.Schema({
     message:{
@@ -12,4 +12,4 @@ const postSchema = new mongoose.Schema({
 
 })
 
-module.exports = mongoose.model('Post', postSchema)
+export = mongoose.model('Post', postSchema)

@@ -1,6 +1,6 @@
-const express = require('express')
+import express from 'express'
 const router = express.Router()
-const post = require('../../controllers/post.js')
+import post from '../controllers/post'
 
 
 router.get('/', post.getAllPosts)
@@ -9,4 +9,4 @@ router.get('/:id', post.getPostByID)
 
 router.post('/', post.addNewPosts)
 
-module.exports = router
+export = router
