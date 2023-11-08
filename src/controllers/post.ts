@@ -1,6 +1,7 @@
 import Post from '../models/post_model'
+import { Request,Response } from 'express'
 
-const getAllPosts = async (req, res) => {
+const getAllPosts = async (req:Request, res:Response) => {
   try{
     const posts = await Post.find()
     res.status(200).send(posts)
@@ -9,7 +10,7 @@ const getAllPosts = async (req, res) => {
   }
 }
 
-const addNewPosts = async (req, res) => {
+const addNewPosts = async (req:Request, res:Response)  => {
   console.log(req.body);
 
   const post = new Post({
@@ -25,7 +26,7 @@ const addNewPosts = async (req, res) => {
   }
 }
 
-const getPostByID = async (req, res) => {
+const getPostByID = async (req:Request, res:Response)  => {
   console.log(req.params.id)
   try{
     const posts = await Post.findById(req.params.id)
