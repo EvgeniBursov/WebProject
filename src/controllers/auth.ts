@@ -53,6 +53,7 @@ const login = async (req:Request, res:Response) => {
         if(user == null){
             return sendError(res, 'incorrect user or password')
         }
+
         const match = await bcrypt.compare(password, user.password)
         if(!match) return sendError(res, "incorrect password")
         
@@ -61,14 +62,63 @@ const login = async (req:Request, res:Response) => {
             process.env.ACCESS_TOKEN_SECRET,
             { 'expiresIn' : process.env.JWT_TOKEN_EXPIRATION}
         )
-        
+
+        const refreshToken = await jwt.sign(
+            { 'id': user._id },
+            process.env.REFRESH_TOKEN_SECRET,
+        )
+
+        if(user.refresh_tokens == null) user.refresh_tokens = [refreshToken]
+        else user.refresh_tokens.push(refreshToken)
+        await user.save()
+
         res.status(200).send({
             'message':'login pass',
-            'accessToken': accessToken
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
         })
     }catch(err){
         sendError(res,'fail checking user')
 }
+}
+
+const refresh = async (req:Request, res:Response) => {
+    const authHeader = req.headers['authorization']
+    if (authHeader == null) return sendError(res, 'authentication missing')    
+    const refreshToken = authHeader && authHeader.split(' ')[1]
+    if (refreshToken == null) return sendError(res, 'authentication missing')    
+
+    try{
+        const user = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const userObject = await User.findById(user._id)
+        if (userObject == null) return sendError(res, 'fail valid token')
+        if(!userObject.refresh_tokens.includes(refreshToken)){
+            userObject.refresh_tokens = []
+            await userObject.save()
+            return sendError(res, 'fail valid token')
+        }
+
+        const newAccessToken = await jwt.sign(
+            { 'id': user._id },
+            process.env.ACCESS_TOKEN_SECRET,
+            { 'expiresIn' : process.env.JWT_TOKEN_EXPIRATION}
+        )
+
+        const newRefreshToken = await jwt.sign(
+            { 'id': user._id },
+            process.env.REFRESH_TOKEN_SECRET,
+        )
+
+        userObject.refresh_tokens[userObject.refresh_tokens.indexOf(refreshToken)]
+        await userObject.save()
+        return res.status(200).send({
+            'accessToken': newAccessToken,
+            'refreshToken': newRefreshToken
+        })
+
+    }catch(err){
+        return sendError(res, 'fail valid token')
+    }
 }
 
 const authenticateMiddleware = async (req:Request, res:Response, next:NextFunction)=>{
@@ -126,4 +176,4 @@ const getPostByID = async (req:Request, res:Response)  => {
   }
 }
 */
-export = { login, register, logout, authenticateMiddleware}
+export = { login, refresh, register, logout, authenticateMiddleware}
