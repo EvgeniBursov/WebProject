@@ -123,12 +123,15 @@ const refresh = async (req:Request, res:Response) => {
 
 const authenticateMiddleware = async (req:Request, res:Response, next:NextFunction)=>{
     const authHeader = req.headers['authorization']
+    if (authHeader == null) return sendError(res, 'authentication missing')
     const token = authHeader && authHeader.split(' ')[1]
     if (token == null) return sendError(res, 'authentication missing')
     
     try{
-        /// const user = 
-        await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        const user = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        req.body.userId = user._id
+        console.log("token user" + user)
+        //await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
         //req.userId = user._id
         next()
     }catch(err){
@@ -138,8 +141,26 @@ const authenticateMiddleware = async (req:Request, res:Response, next:NextFuncti
 
 
 const logout = async (req:Request, res:Response) => {
+    const authHeader = req.headers['authorization']
+    if (authHeader == null) return sendError(res, 'authentication missing')    
+    const refreshToken = authHeader.split(' ')[1]
+    if (refreshToken == null) return sendError(res, 'authentication missing')    
 
-    res.status(400).send({"error":"not implemented"})
+    try{
+        const user = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const userObject = await User.findById(user._id)
+        if (userObject == null) return sendError(res, 'fail valid token')
+        if(!userObject.refresh_tokens.includes(refreshToken)){
+            userObject.refresh_tokens = []
+            await userObject.save()
+            return sendError(res, 'fail valid token')
+        }
+        userObject.refresh_tokens.splice(userObject.refresh_tokens.indexOf(refreshToken),1)
+        await userObject.save()
+        res.status(200).send()
+    }catch(err){
+        res.status(400).send({"error":"not implemented"})
+    }
 }
 
 /*  try{

@@ -63,23 +63,64 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!match)
             return sendError(res, "incorrect password");
         const accessToken = yield jsonwebtoken_1.default.sign({ 'id': user._id }, process.env.ACCESS_TOKEN_SECRET, { 'expiresIn': process.env.JWT_TOKEN_EXPIRATION });
+        const refreshToken = yield jsonwebtoken_1.default.sign({ 'id': user._id }, process.env.REFRESH_TOKEN_SECRET);
+        if (user.refresh_tokens == null)
+            user.refresh_tokens = [refreshToken];
+        else
+            user.refresh_tokens.push(refreshToken);
+        yield user.save();
         res.status(200).send({
             'message': 'login pass',
-            'accessToken': accessToken
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
         });
     }
     catch (err) {
         sendError(res, 'fail checking user');
     }
 });
+const refresh = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    if (authHeader == null)
+        return sendError(res, 'authentication missing');
+    const refreshToken = authHeader && authHeader.split(' ')[1];
+    if (refreshToken == null)
+        return sendError(res, 'authentication missing');
+    try {
+        const user = yield jsonwebtoken_1.default.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const userObject = yield user_model_1.default.findById(user._id);
+        if (userObject == null)
+            return sendError(res, 'fail valid token');
+        if (!userObject.refresh_tokens.includes(refreshToken)) {
+            userObject.refresh_tokens = [];
+            yield userObject.save();
+            return sendError(res, 'fail valid token');
+        }
+        const newAccessToken = yield jsonwebtoken_1.default.sign({ 'id': user._id }, process.env.ACCESS_TOKEN_SECRET, { 'expiresIn': process.env.JWT_TOKEN_EXPIRATION });
+        const newRefreshToken = yield jsonwebtoken_1.default.sign({ 'id': user._id }, process.env.REFRESH_TOKEN_SECRET);
+        userObject.refresh_tokens[userObject.refresh_tokens.indexOf(refreshToken)];
+        yield userObject.save();
+        return res.status(200).send({
+            'accessToken': newAccessToken,
+            'refreshToken': newRefreshToken
+        });
+    }
+    catch (err) {
+        return sendError(res, 'fail valid token');
+    }
+});
 const authenticateMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.headers['authorization'];
+    if (authHeader == null)
+        return sendError(res, 'authentication missing');
     const token = authHeader && authHeader.split(' ')[1];
     if (token == null)
         return sendError(res, 'authentication missing');
     try {
-        /// const user = 
-        yield jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = yield jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        req.body.userId = user._id;
+        console.log("token user" + user);
+        //await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
         //req.userId = user._id
         next();
     }
@@ -88,7 +129,29 @@ const authenticateMiddleware = (req, res, next) => __awaiter(void 0, void 0, voi
     }
 });
 const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.status(400).send({ "error": "not implemented" });
+    const authHeader = req.headers['authorization'];
+    if (authHeader == null)
+        return sendError(res, 'authentication missing');
+    const refreshToken = authHeader.split(' ')[1];
+    if (refreshToken == null)
+        return sendError(res, 'authentication missing');
+    try {
+        const user = yield jsonwebtoken_1.default.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const userObject = yield user_model_1.default.findById(user._id);
+        if (userObject == null)
+            return sendError(res, 'fail valid token');
+        if (!userObject.refresh_tokens.includes(refreshToken)) {
+            userObject.refresh_tokens = [];
+            yield userObject.save();
+            return sendError(res, 'fail valid token');
+        }
+        userObject.refresh_tokens.splice(userObject.refresh_tokens.indexOf(refreshToken), 1);
+        yield userObject.save();
+        res.status(200).send();
+    }
+    catch (err) {
+        res.status(400).send({ "error": "not implemented" });
+    }
 });
-module.exports = { login, register, logout, authenticateMiddleware };
+module.exports = { login, refresh, register, logout, authenticateMiddleware };
 //# sourceMappingURL=auth.js.map

@@ -32,6 +32,13 @@ describe("Auth Tests", ()=>{
             "password": userPassword
         })
         expect(response.statusCode).toEqual(200)
+        const accessToken = response.body.accessToken
+        expect(accessToken).not.toBeNull()
+        const refreshToken = response.body.refreshToken
+        expect(refreshToken).not.toBeNull()
+
+        //response = await request(app).get('/post').set('Authorization','JWT', + accessToken)
+        //expect(response.statusCode).toEqual(200)
     })
 })
 /*
