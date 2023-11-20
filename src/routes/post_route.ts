@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *  name: Post
+ *  description: The Post API
+ */
+
 import express from 'express'
 const router = express.Router()
 import post from '../controllers/post'

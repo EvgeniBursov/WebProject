@@ -4,3 +4,5 @@ node_modules
 package.json
 .env
 requests.rest
+.eslintrc.json
+tsconfig.json

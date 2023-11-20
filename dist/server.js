@@ -18,5 +18,24 @@ const auth_route_js_1 = __importDefault(require("./routes/auth_route.js"));
 app.use('/auth', auth_route_js_1.default);
 const post_route_1 = __importDefault(require("./routes/post_route"));
 app.use('/post', post_route_1.default);
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+if (process.env.NODE_ENV == "development") {
+    const options = {
+        definition: {
+            openapi: "3.0.0",
+            info: {
+                title: "Library API",
+                version: "1.0.0",
+                description: "A simple Express Library API",
+            },
+            servers: [{ url: "http://localhost:3000", },],
+        },
+        //apis: ["./src/routes/*.ts"],
+        apis: ["./dist/routes/*.js"],
+    };
+    const specs = (0, swagger_jsdoc_1.default)(options);
+    app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(specs));
+}
 module.exports = app;
 //# sourceMappingURL=server.js.map
