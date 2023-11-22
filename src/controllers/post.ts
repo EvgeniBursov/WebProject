@@ -1,6 +1,17 @@
 import Post from '../models/post_model'
 import { Request,Response } from 'express'
 
+const getAllPostsEvent = () =>{
+  console.log("events")
+  try{
+    const posts = await Post.find()
+    return posts
+  }catch(err){
+    return []
+  }
+}
+
+
 const getAllPosts = async (req:Request, res:Response) => {
   try{
     const posts = await Post.find()
